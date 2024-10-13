@@ -6,12 +6,9 @@ int main() {
 	SetTargetFPS(120);
 	DisableCursor();
 
-	raylib::Camera camera(Vector3{200, 100, 200});
-	camera.SetFovy(45.0f);
-
-	camera.GetProjection();
-
-	rlSetBlendMode(1);
+	float offset = 100.0f;
+	raylib::Camera camera(Vector3{200, offset, 200});
+	Matrix proj = MatrixPerspective(DEG2RAD * 80.0f, GetScreenWidth() / GetScreenHeight(), 0.1f, 10000000.0f);
 
 	raylib::Model rocket(GenMeshCylinder(4.5f, 71.0f, 18));
 	raylib::Vector3 pos(0, 0, 0), vel(0, 0, 0), acc(0, 0, 0);
@@ -48,24 +45,31 @@ int main() {
 			pos.y = 0;
 		}
 
-		camera.position.y = pos.y + 100;
+		if (IsKeyDown(KEY_DOWN)) {
+			offset -= 10.0f * dt;
+		}
+		else if (IsKeyDown(KEY_UP)) {
+			offset += 10.0f * dt;
+		}
+
+		camera.position.y = pos.y + offset;
 		camera.target = pos;
 
 		BeginDrawing();
 		ClearBackground(BLACK);
 		
 		camera.BeginMode();
+		rlSetMatrixProjection(proj);
 
-		DrawPlane({}, { 1000, 1000 }, BROWN);
-		rocket.Draw(pos);
+		DrawSphereEx({ 0, -6378000, 0 }, 6378000, 100, 100, DARKGREEN);
+		rocket.Draw(pos, 1.0f, DARKGRAY);
 
 		camera.EndMode();
 
 		DrawFPS(10, 10);
-		DrawText(TextFormat("Fuel: %f", fuelWeight), 10, 30, 24, WHITE);
-		DrawText(TextFormat("Acceleration: (%f, %f, %f)", acc.x, acc.y, acc.z), 10, 60, 24, WHITE);
-		DrawText(TextFormat("Velocity: (%f, %f, %f)", vel.x, vel.y, vel.z), 10, 90, 24, WHITE);
-		DrawText(TextFormat("Position: (%f, %f, %f)", pos.x, pos.y, pos.z), 10, 120, 24, WHITE);
+		DrawText(TextFormat("Fuel (thousand kg): %f", fuelWeight / 1000.0f), 10, 30, 18, WHITE);
+		DrawText(TextFormat("Velocity (m/s): %0.2f", vel.Length()), 10, 50, 18, WHITE);
+		DrawText(TextFormat("Altitude (km): %0.2f", pos.y / 1000.0f), 10, 70, 18, WHITE);
 		EndDrawing();
 	}
 
